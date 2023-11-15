@@ -1,0 +1,77 @@
+mql5
+// Developer: Forex Robot Easy Team
+// Site: forexroboteasy.com
+// Program Name: Fibonacci Bollinger Bands MT5
+
+// Include necessary libraries
+#include <Trade\Trade.mqh>
+#include <Indicators\Indicators.mqh>
+
+// Define input parameters
+input int fibonacciLevels = 12;                // Number of Fibonacci levels
+input ENUM_MA_METHOD maMethod = MODE_SMA;      // Moving average type
+input ENUM_APPLIED_PRICE appliedPrice = PRICE_CLOSE;   // Price data source
+
+// Define global variables
+int indicatorHandle;       // Indicator handle
+double fibonacci[12];      // Array to store Fibonacci levels
+double upperBand, lowerBand;    // Bollinger Bands values
+
+// Initialize the expert advisor
+int OnInit()
+{
+    // Calculate Fibonacci levels
+    for(int i = 0; i < fibonacciLevels; i++)
+    {
+        fibonacci[i] = iCustom(NULL, 0, 'Fibonacci', i, 0);
+    }
+
+    // Calculate Bollinger Bands
+    indicatorHandle = iBands(NULL, 0, 20, 2.0, maMethod, appliedPrice);
+    
+    return(INIT_SUCCEEDED);
+}
+
+// Handle new tick event
+void OnTick()
+{
+    // Check if price is approaching any Fibonacci level
+    for(int i = 0; i < fibonacciLevels; i++)
+    {
+        if(MathAbs(fibonacci[i] - Ask) < 0.001 || MathAbs(fibonacci[i] - Bid) < 0.001)
+        {
+            // Price is approaching a Fibonacci level, take action
+            SendNotification('Price approaching Fibonacci level ' + DoubleToString(fibonacci[i], 5));
+            break;
+        }
+    }
+
+    // Check if price is crossing the Bollinger Bands
+    if(iBands(NULL, 0, 20, 2.0, maMethod, appliedPrice, upperBand, lowerBand) > 0)
+    {
+        if(Bid > upperBand)
+        {
+            // Price is crossing above the upper Bollinger Band, take action
+            SendNotification('Price crossing above upper Bollinger Band');
+        }
+        else if(Bid < lowerBand)
+        {
+            // Price is crossing below the lower Bollinger Band, take action
+            SendNotification('Price crossing below lower Bollinger Band');
+        }
+    }
+}
+
+// Handle deinitialization
+void OnDeinit(const int reason)
+{
+    // Clean up resources
+    IndicatorRelease(indicatorHandle);
+}
+
+// Send notification to mobile devices
+void SendNotification(string message)
+{
+    // Code to send notification to mobile devices
+    // Implementation will depend on the specific platform or service used
+}
